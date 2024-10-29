@@ -20,7 +20,7 @@ app.use(session({
 }));
 
 // Rutas
-app.use('/api', userRoutes);
+app.use('/api/users', userRoutes);
 
 // Servidor
 const PORT = process.env.PORT || 5000;

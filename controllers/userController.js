@@ -29,49 +29,93 @@ exports.registerUser = async (req, res) => {
 // Función para iniciar sesión
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email, password });
-  if (user) {
-    req.session.user = user;
-    res.json(user);
-  } else {
-    res.status(400).json({ message: 'Credenciales incorrectas' });
+  const user = await User.findOne({ email });
+
+  if (!user || !(await user.comparePassword(password))) {
+    return res.status(401).json({ message: 'Credenciales inválidas' });
   }
+
+  // Almacena el usuario en la sesión
+  req.session.user = {
+    _id: user._id,
+    email: user.email,
+    // Otros campos que necesites
+  };
+
+  res.json({ message: 'Inicio de sesión exitoso' });
 };
 
 // Función para ingresar código
 exports.ingresarCodigo = async (req, res) => {
   const { codigo } = req.body;
-  const user = req.session.user;
 
   // Verifica que el usuario esté autenticado
-  if (!user) return res.status(401).json({ message: 'Usuario no autenticado' });
+  const user = req.session.user;
+  if (!user || !user._id) {
+    return res.status(401).json({ message: 'Usuario no autenticado' });
+  }
 
   try {
-    const code = await Code.findOne({ code: codigo, disponible: false });
-    if (!code) return res.json({ message: 'Código inválido o ya reclamado' });
+    // Busca el código en la base de datos
+    const code = await Code.findOne({ code: codigo, disponible: true });
+    if (!code) {
+      return res.status(400).json({ message: 'Código inválido o ya reclamado' });
+    }
 
-    // Cambia la disponibilidad del código y guarda en la base de datos
-    code.disponible = true;
+    // Marca el código como no disponible
+    code.disponible = false;
     await code.save();
 
-    // Encuentra al usuario en la base de datos usando su ID
+    // Crea un nuevo registro de historial
+    const nuevoCodigo = {
+      codigo: code.code,
+      premio: code.prize,
+      fechaHora: new Date(),
+      email: user.email // Asegúrate de que el usuario tenga un campo email
+    };
+
+    // Actualiza el historial del usuario en la base de datos
     const userInDb = await User.findById(user._id);
     if (!userInDb) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-    // Crea el objeto para el nuevo código ingresado
-    const nuevoCodigo = {
-      codigo,
-      premio: code.prize,
-      fechaHora: new Date()
-    };
-
-    // Agrega el nuevo código al array `codigosIngresados` del usuario y guarda los cambios
-    userInDb.codigosIngresados.push(nuevoCodigo);
+    userInDb.codigosIngresados.push(nuevoCodigo); // Asegúrate de que el esquema de User tenga la propiedad codigosIngresados
     await userInDb.save();
+
+    // Aquí puedes guardar el nuevo registro en una colección de logs, si así lo deseas
+    const Historial = mongoose.model('Historial', new mongoose.Schema({
+      email: String,
+      codigo: String,
+      premio: Number,
+      fechaHora: Date
+    }));
+
+    await Historial.create(nuevoCodigo); // Guarda en la colección de logs
 
     res.json(nuevoCodigo);
   } catch (error) {
     console.error("Error al ingresar el código:", error);
-    res.status(500).json({ message: "Error al ingresar el código" });
+    res.status(500).json({ message: 'Error al procesar el código' });
+  }
+};
+exports.obtenerHistorial = async (req, res) => {
+  const user = req.session.user;
+
+  // Verifica que el usuario esté autenticado
+  if (!user || !user._id) {
+    return res.status(401).json({ message: 'Usuario no autenticado' });
+  }
+
+  try {
+    // Busca el usuario con su historial de códigos ingresados
+    const userInDb = await User.findById(user._id).select('codigosIngresados email'); // Incluye el email si lo necesitas
+    if (!userInDb) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Envía el historial de códigos ingresados al frontend
+    res.json(userInDb.codigosIngresados);
+  } catch (error) {
+    console.error("Error al obtener el historial:", error);
+    res.status(500).json({ message: "Error al obtener el historial" });
   }
 };
