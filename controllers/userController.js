@@ -43,34 +43,35 @@ exports.ingresarCodigo = async (req, res) => {
   const { codigo } = req.body;
   const user = req.session.user;
 
-  const code = await Code.findOne({ codigo, disponible: true });
-  if (!code) return res.json({ message: 'Código inválido o ya reclamado' });
+  // Verifica que el usuario esté autenticado
+  if (!user) return res.status(401).json({ message: 'Usuario no autenticado' });
 
-  code.disponible = false;
-  await code.save();
-
-  const nuevoCodigo = {
-    codigo,
-    premio: code.premio,
-    fechaHora: new Date()
-  };
-  
-  user.codigosIngresados.push(nuevoCodigo);
-  await user.save();
-  
-  res.json(nuevoCodigo);
-};
-exports.getCodigos = async (req, res) => {
   try {
-    const users = await User.find({}, 'nombre codigosIngresados');
-    const codigos = users.flatMap(user => 
-      user.codigosIngresados.map(codigo => ({
-        usuario: user.nombre,
-        ...codigo._doc
-      }))
-    );
-    res.json(codigos);
+    const code = await Code.findOne({ code: codigo, disponible: false });
+    if (!code) return res.json({ message: 'Código inválido o ya reclamado' });
+
+    // Cambia la disponibilidad del código y guarda en la base de datos
+    code.disponible = true;
+    await code.save();
+
+    // Encuentra al usuario en la base de datos usando su ID
+    const userInDb = await User.findById(user._id);
+    if (!userInDb) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+    // Crea el objeto para el nuevo código ingresado
+    const nuevoCodigo = {
+      codigo,
+      premio: code.prize,
+      fechaHora: new Date()
+    };
+
+    // Agrega el nuevo código al array `codigosIngresados` del usuario y guarda los cambios
+    userInDb.codigosIngresados.push(nuevoCodigo);
+    await userInDb.save();
+
+    res.json(nuevoCodigo);
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener los códigos" });
+    console.error("Error al ingresar el código:", error);
+    res.status(500).json({ message: "Error al ingresar el código" });
   }
 };
