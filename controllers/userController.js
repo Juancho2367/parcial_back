@@ -15,34 +15,40 @@ exports.registerUser = async (req, res) => {
     const newUser = new User({
       nombre,
       email,
-      password, // Asegúrate de encriptar la contraseña aquí
+      password, // Se encriptará automáticamente si tienes el pre-save hook en el modelo
       anioNacimiento,
     });
 
     await newUser.save();
     res.status(201).json({ success: true, message: "Usuario registrado exitosamente" });
   } catch (error) {
-    console.error("Error al registrar el usuario:", error);
+    console.error("Error al registrar el usuario:", error); // Esto te ayudará a ver el error en la consola
     res.status(500).json({ success: false, message: "Error al registrar el usuario" });
   }
 };
 // Función para iniciar sesión
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
 
-  if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ message: 'Credenciales inválidas' });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Credenciales incorrectas' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Credenciales incorrectas' });
+    }
+
+    // Aquí podrías establecer la sesión del usuario, por ejemplo:
+    req.session.user = { _id: user._id, email: user.email };
+
+    res.json({ message: 'Inicio de sesión exitoso' });
+  } catch (error) {
+    console.error("Error al iniciar sesión:", error);
+    res.status(500).json({ message: 'Error al iniciar sesión' });
   }
-
-  // Almacena el usuario en la sesión
-  req.session.user = {
-    _id: user._id,
-    email: user.email,
-    // Otros campos que necesites
-  };
-
-  res.json({ message: 'Inicio de sesión exitoso' });
 };
 
 // Función para ingresar código
