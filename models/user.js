@@ -1,23 +1,15 @@
+// models/User.js
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
-  nombre: { type: String, required: true }, // Asegúrate de que 'nombre' esté definido
-  email: { type: String, required: true, unique: true },
+  nombre: { type: String, required: true },
+  fecha: { type: Date, required: true },
+  cedula: { type: String, required: true, unique: true },
+  correo: { type: String, required: true, unique: true },
+  celular: { type: String, required: true },
+  ciudad: { type: String, required: true },
   password: { type: String, required: true },
-  anioNacimiento: { type: Number, required: true }, // Agrega el campo anioNacimiento
-});
-
-// Método para comparar contraseñas
-userSchema.methods.comparePassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
-};
-
-// Pre-save hook para encriptar la contraseña
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+  role: { type: String, default: 'user' }
 });
 
 module.exports = mongoose.model('User', userSchema);

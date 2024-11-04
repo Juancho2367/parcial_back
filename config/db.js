@@ -1,16 +1,30 @@
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://juanquintero05:Iatge8E4pLQvfDln@juandacho.3pujv.mongodb.net/?retryWrites=true&w=majority&appName=Juandacho', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB conectado');
-  } catch (error) {
-    console.error('Error al conectar MongoDB', error);
-    process.exit(1);
-  }
-};
+let db;
 
-module.exports = connectDB;
+async function connectDb() {
+    try {
+        const client = new MongoClient(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+
+        if (!db) {
+            await client.connect();
+            db = client.db(process.env.test); // Conecta con el nombre de tu base de datos
+            console.log("Conexión exitosa a la base de datos");
+        }
+    } catch (error) {
+        console.error("Error al conectar a la base de datos:", error);
+        throw error;
+    }
+}
+
+function getDb() {
+    if (!db) {
+        throw new Error('La base de datos no está inicializada');
+    }
+    return db;
+}
+
+module.exports = { connectDb, getDb };

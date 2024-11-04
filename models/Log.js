@@ -1,11 +1,12 @@
+// models/Reclamo.js
 const mongoose = require('mongoose');
 
-const logSchema = new mongoose.Schema({
-  email: { type: String, required: true },
-  code: { type: String, required: true },
-  prize: { type: Number, required: true },
-  claimDate: { type: Date, default: Date.now },
-  location: { type: String, required: true } // Ubicación del reclamo
+const reclamoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  codigo: { type: String, required: true },
+  montoGanado: { type: Number, default: 0 },
+  fechaReclamo: { type: Date, default: Date.now },
+  estado: { type: String, default: 'pendiente' } // Estado puede ser 'pendiente', 'reclamado' o mensajes de error
 });
 
-module.exports = mongoose.model('Log', logSchema);
+module.exports = mongoose.model('Reclamo', reclamoSchema);
