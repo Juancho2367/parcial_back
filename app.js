@@ -2,7 +2,6 @@ const express = require('express');
 const { urlencoded, json } = require('express');
 const cors = require('cors');
 const router = require('./routes/userRoutes');
-const codesRoutes = require('./routes/codes');
 const { connectDb } = require('./config/db'); // Importa connectDb
 require('dotenv').config();
 
@@ -20,7 +19,7 @@ app.get('/', (req, res) => {
 
 // Rutas de usuario
 app.use('/api/users', router);
-app.use('/api/codes', codesRoutes);
+
 
 // Conectar a la base de datos
 connectDb().then(() => {

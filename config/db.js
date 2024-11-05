@@ -7,11 +7,13 @@ async function connectDb() {
         const client = new MongoClient(process.env.MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
+            connectTimeoutMS: 20000,  // Incrementa el tiempo de espera para conectar
+            socketTimeoutMS: 45000 
         });
 
         if (!db) {
             await client.connect();
-            db = client.db(process.env.test); // Conecta con el nombre de tu base de datos
+            db = client.db(process.env.Juandacho); // Conecta con el nombre de tu base de datos
             console.log("Conexión exitosa a la base de datos");
         }
     } catch (error) {
