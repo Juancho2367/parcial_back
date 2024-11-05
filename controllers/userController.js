@@ -70,7 +70,7 @@ const register = async (req, res) => {
 
 // Lógica para reclamar código
 const reclamarCodigo = async (req, res) => {
-    const { userId, codigo } = req.body; // Asegúrate de que esto coincida con los datos enviados
+    const { userId, codigo } = req.body;
     console.log("Datos recibidos para reclamar código:", req.body);
 
     try {
@@ -87,7 +87,7 @@ const reclamarCodigo = async (req, res) => {
         const usuario = await usersCollection.findOne({ _id: userObjectId });
         if (!usuario) {
             await reclamosCollection.insertOne({
-                userId: userObjectId,
+                userId: usuario ? usuario._id : userObjectId,
                 codigo,
                 montoGanado: 0,
                 fechaReclamo: moment().tz("America/Bogota").format("YYYY-MM-DD HH:mm:ss"),
@@ -108,8 +108,6 @@ const reclamarCodigo = async (req, res) => {
             });
             return res.status(400).json({ status: "Error", message: "Código no válido." });
         }
-        
-        // Verifica si el código ya fue reclamado
         if (codigoReclamado.estado !== "por reclamar") {
             await reclamosCollection.insertOne({
                 userId: usuario._id,
@@ -124,7 +122,6 @@ const reclamarCodigo = async (req, res) => {
         const montoGanado = codigoReclamado.monto; 
         const nuevaFecha = moment().tz("America/Bogota").format("YYYY-MM-DD HH:mm:ss");
 
-        // Actualiza el estado del código a "reclamado"
         await codigosCollection.updateOne(
             { codigo },
             {
@@ -135,7 +132,6 @@ const reclamarCodigo = async (req, res) => {
             }
         );
 
-        // Inserta el reclamo en la colección de reclamos
         await reclamosCollection.insertOne({
             userId: usuario._id,
             codigo,
@@ -144,7 +140,6 @@ const reclamarCodigo = async (req, res) => {
             estado: "reclamado"
         });
 
-        // Respuesta exitosa
         res.status(201).json({
             status: "Éxito",
             message: `¡Ganaste! Monto: $${montoGanado}`,
@@ -155,10 +150,6 @@ const reclamarCodigo = async (req, res) => {
         res.status(500).json({ status: "Error", message: "Error en el servidor" });
     }
 };
-
-module.exports = { reclamarCodigo }; // Asegúrate de exportar la función
-
-
 const obtenerHistorial = async (req, res) => {
     const { userId } = req.params; // Asumiendo que userId se pasa como parámetro de la URL
     console.log("Obteniendo historial para el usuario:", userId);
