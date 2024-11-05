@@ -6,11 +6,17 @@ const { connectDb } = require('./config/db'); // Importa connectDb
 require('dotenv').config();
 
 const app = express();
+const corsOptions = {
+    origin: 'https://parcial-front-jade.vercel.app', // Cambia esto por la URL de tu frontend en Vercel
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Si necesitas enviar cookies o autenticación
+    allowedHeaders: ['Content-Type', 'Authorization'], // Ajusta según los headers que usas
+};
 
 // Middleware
 app.use(urlencoded({ extended: true }));
 app.use(json());
-app.use(cors());
+app.use(cors((corsOptions)));
 
 // Ruta raíz
 app.get('/', (req, res) => {
