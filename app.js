@@ -6,18 +6,20 @@ const { connectDb } = require('./config/db'); // Importa connectDb
 require('dotenv').config();
 
 const app = express();
-app.use(cors({
-    origin: 'https://parcial-front-jade.vercel.app', // Tu URL de frontend
+
+// Configuración de CORS
+const corsOptions = {
+    origin: 'https://parcial-front-jade.vercel.app', // Cambia a tu URL de frontend en Vercel
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
-}));
+};
 
+app.use(cors(corsOptions)); // Aplica el middleware de CORS una vez
+
+// Middleware para procesar JSON y URL-encoded
 app.use(express.json());
-// Middleware
 app.use(urlencoded({ extended: true }));
-app.use(express.json());
-app.use(cors((corsOptions)));
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -27,10 +29,8 @@ app.get('/', (req, res) => {
 // Rutas de usuario
 app.use('/api/users', router);
 
-
-// Conectar a la base de datos
+// Conectar a la base de datos y iniciar el servidor
 connectDb().then(() => {
-    // Iniciar el servidor solo después de conectar a la base de datos
     const port = process.env.PORT || 4000;
     app.listen(port, () => {
         console.log(`Servidor corriendo en el puerto ${port}`);
