@@ -16,7 +16,7 @@ app.use(cors({
 app.use(express.json());
 // Middleware
 app.use(urlencoded({ extended: true }));
-app.use(json());
+app.use(express.json());
 app.use(cors((corsOptions)));
 
 // Ruta raíz
