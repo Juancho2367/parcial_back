@@ -195,8 +195,8 @@ const registerAdmin = async (req, res) => {
     const hashedPassword = CryptoJS.SHA256(password, process.env.CODE_SECRET_DATA).toString();
 
     try {
-        await connectDb(); // Conectar a la base de datos
-        const db = getDb(); // Obtener la referencia a la base de datos
+        await connectDb(); 
+        const db = getDb(); 
 
         const existingAdmin = await db.collection('admins').findOne({ username }); // Busca en la colección de admins
         if (existingAdmin) {
@@ -213,9 +213,10 @@ const registerAdmin = async (req, res) => {
         res.status(201).json({ status: "Éxito", message: "Administrador registrado correctamente" });
     } catch (error) {
         console.error('Error al registrar el administrador:', error);
-        res.status(500).json({ status: "Error", message: "Internal Server Error" });
+        res.status(500).json({ status: "Error", message: "Error en el servidor" });
     }
 };
+
 const loginAdmin = async (req, res) => {
     const { username, password } = req.body; // Cambiado a username
     console.log("Datos recibidos:", { username, password }); 
